@@ -7,12 +7,14 @@ export async function handleApiRequest(request, env) {
   const path = url.pathname;
   const method = request.method;
 
-  // CORS headers
+  const requestOrigin = request.headers.get('Origin');
+  const workerOrigin = url.origin;
   const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Vary': 'Origin',
   };
+  if (requestOrigin === workerOrigin) corsHeaders['Access-Control-Allow-Origin'] = requestOrigin;
 
   // Handle OPTIONS request
   if (method === 'OPTIONS') {

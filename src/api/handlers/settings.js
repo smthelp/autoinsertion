@@ -38,15 +38,15 @@ async function getSettings(env, corsHeaders) {
     } else {
       // Default settings if not found
       settings = {
-        site_name: 'GlobalMart',
-        site_description: 'Your trusted partner for high-quality industrial products and innovative solutions worldwide',
-        company_intro: 'We are a leading manufacturer and supplier of high-quality industrial products. With over 20 years of experience, we serve clients across the globe with innovative solutions and exceptional customer service.',
-        email: 'info@example.com',
-        phone: '+1 234 567 8900',
-        address: '123 Business St, City, Country',
-        linkedin: '',
-        facebook: '',
-        twitter: '',
+        site_name: 'Southern Machinery',
+        site_description: 'Smart THT auto insertion and PCB assembly automation since 2011',
+        company_intro: 'Southern Machinery designs THT insertion equipment and turnkey PCB assembly automation lines from Shenzhen, China.',
+        email: 'jasonwu@smthelp.com',
+        phone: '+86 136 0256 2576',
+        address: "Bao'an District, Shenzhen, China",
+        linkedin: 'https://www.linkedin.com/company/smtmachine',
+        facebook: 'https://www.facebook.com/autoinsertion',
+        twitter: 'https://twitter.com/smtspecialist',
       };
     }
 
@@ -80,7 +80,7 @@ async function updateSettings(request, env, corsHeaders) {
 
     // Validate required fields
     const settings = {
-      site_name: data.site_name || 'GlobalMart',
+      site_name: data.site_name || 'Southern Machinery',
       site_description: data.site_description || '',
       company_intro: data.company_intro || '',
       email: data.email || '',

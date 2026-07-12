@@ -42,7 +42,7 @@
 - **数据库**: Cloudflare D1 (SQLite)
 - **存储**: Cloudflare R2 (图片)、Cloudflare KV (设置)
 - **前端**: HTML5、CSS3、JavaScript (原生)
-- **身份验证**: JWT tokens 配合 SHA-256 密码哈希
+- **身份验证**: HS256 JWT 配合带独立盐值的 PBKDF2-SHA256 密码哈希
 - **权限管理**: 基于角色的访问控制（RBAC）
 
 ## 部署步骤
@@ -57,7 +57,7 @@ npm install
 
 ```bash
 # 创建数据库
-wrangler d1 create b2b_database
+wrangler d1 create tht_database
 
 # 记录输出的 database_id，并更新到 wrangler.toml 文件中
 ```
@@ -69,15 +69,15 @@ wrangler d1 create b2b_database
 ```toml
 [[d1_databases]]
 binding = "DB"
-database_name = "b2b_database"
-database_id = "your-database-id"  # 替换这里
+database_name = "tht_database"
+database_id = "28bed2b5-b7b7-4511-82c4-1694f883ce2a"
 ```
 
 ### 4. 创建 R2 存储桶（用于图片上传）
 
 ```bash
 # 创建 R2 bucket
-wrangler r2 bucket create b2b-product-images
+wrangler r2 bucket create tht-product-images
 ```
 
 确认 `wrangler.toml` 中已配置 R2：
@@ -85,17 +85,17 @@ wrangler r2 bucket create b2b-product-images
 ```toml
 [[r2_buckets]]
 binding = "IMAGES"
-bucket_name = "b2b-product-images"
+bucket_name = "tht-product-images"
 ```
 
 ### 5. 创建 KV 命名空间（用于网站设置）
 
 ```bash
 # 为生产环境创建 KV 命名空间
-wrangler kv namespace create "STATIC_ASSETS"
+wrangler kv namespace create "tht-kv-autoinsertion"
 
 # 为开发环境创建 KV 命名空间（可选）
-wrangler kv namespace create "STATIC_ASSETS" --preview
+wrangler kv namespace create "tht-preview-kv-autoinsertion"
 ```
 
 更新 `wrangler.toml` 中的 KV 命名空间 ID：
@@ -103,23 +103,21 @@ wrangler kv namespace create "STATIC_ASSETS" --preview
 ```toml
 [[kv_namespaces]]
 binding = "STATIC_ASSETS"
-id = "your-kv-namespace-id"  # 替换这里
-preview_id = "your-preview-kv-namespace-id"  # 可选，用于本地开发
+id = "3483bad1eb214b5094c45f0b69c50ff0"
+preview_id = "d642e7cb60924c16b5faa618b8352227"
 ```
 
 ### 6. 初始化数据库
 
 ```bash
 # 执行数据库 schema
-wrangler d1 execute b2b_database --file=./schema/schema.sql
+wrangler d1 execute tht_database --remote --file=./schema/schema.sql
 ```
 
 这将会创建：
 - 数据库表（products、inquiries、admins）
-- 两个默认管理员账户：
-  - **超级管理员**：用户名 `admin123`，密码 `admin123`
-  - **普通管理员**：用户名 `staff`，密码 `staff123`
-- 用于测试的示例产品数据
+- 两个使用独立盐值 PBKDF2 哈希的预配置管理员账户。密码通过安全渠道提供，不写入仓库文档。
+- 已核验的 THT 产品种子数据
 
 ### 7. 本地开发
 
@@ -137,69 +135,22 @@ npm run dev
 npm run deploy
 ```
 
+生产站点使用 Cloudflare Pages Advanced Mode 部署：
+
+`https://tht-autoinsertion-site.pages.dev`
+
+Pages 项目复用 `wrangler.pages.toml` 中声明的 `tht_database` D1 数据库、`tht-product-images` R2 存储桶和 `tht-kv-autoinsertion` KV 命名空间。构建脚本会把 Worker 打包为 `.pages-dist/_worker.js`；`.pages-dist/` 是生成目录，不得提交到 Git。
+
 
 
 ## 管理员账户管理
 
-### 默认凭据
+### 安全配置
 
-初始设置后，您将拥有两个管理员账户：
+管理员密码使用每个账号独立盐值、100,000 次迭代的 PBKDF2-SHA256 哈希，这是 Cloudflare Pages WebCrypto 运行时支持的最高值。JWT 签名密钥必须存入 Cloudflare Secret，禁止写入 `wrangler.toml`：
 
-| 用户名 | 密码 | 角色 | 权限 |
-|--------|------|------|------|
-| admin123 | admin123 | 超级管理员 | 完整的增删改查权限 |
-| staff | staff123 | 普通管理员 | 只读权限 |
-
-### 安全最佳实践
-
-🔐 **重要提示**：首次部署后请立即更改默认密码！
-
-#### 1. 生成新的密码哈希
-
-在浏览器控制台中使用以下代码生成新的密码哈希：
-
-```javascript
-async function hashPassword(password) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-// 为您的新密码生成哈希
-hashPassword('your-new-secure-password').then(hash => console.log(hash));
-```
-
-#### 2. 在数据库中更新密码
-
-```sql
--- 更新管理员密码
-UPDATE admins
-SET password_hash = 'your-generated-hash'
-WHERE username = 'admin';
-```
-
-通过 Wrangler CLI 执行：
-```bash
-wrangler d1 execute b2b_database --command="UPDATE admins SET password_hash = 'your-hash' WHERE username = 'admin';"
-```
-
-或通过 Cloudflare Dashboard 控制台执行。
-
-#### 3. 配置 JWT Secret
-
-**方式 A**：使用 wrangler.toml（生产环境不推荐）
-```toml
-[vars]
-JWT_SECRET = "your-very-secure-secret-key-change-this"
-ENVIRONMENT = "production"
-```
-
-**方式 B**：使用 Cloudflare Dashboard Secrets（推荐）
 ```bash
 wrangler secret put JWT_SECRET
-# 提示时输入您的密钥
 ```
 
 ## 使用指南

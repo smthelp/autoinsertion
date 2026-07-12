@@ -3,7 +3,7 @@
  * Handles all inquiry-related API requests
  */
 
-import { requireSuperAdmin } from './admin';
+import { requireAuth, requireSuperAdmin } from './admin';
 
 export async function handleInquiries(request, env, corsHeaders) {
   const url = new URL(request.url);
@@ -17,13 +17,13 @@ export async function handleInquiries(request, env, corsHeaders) {
 
   // GET /api/inquiries - Get all inquiries (Admin only)
   if (method === 'GET' && pathParts.length === 2) {
-    return getAllInquiries(env, corsHeaders);
+    return getAllInquiries(request, env, corsHeaders);
   }
 
   // GET /api/inquiries/:id - Get single inquiry (Admin only)
   if (method === 'GET' && pathParts.length === 3) {
     const inquiryId = pathParts[2];
-    return getInquiry(env, inquiryId, corsHeaders);
+    return getInquiry(request, env, inquiryId, corsHeaders);
   }
 
   // PUT /api/inquiries/:id/status - Update inquiry status (Admin only)
@@ -101,9 +101,9 @@ async function createInquiry(request, env, corsHeaders) {
 }
 
 // Get all inquiries (Admin only)
-async function getAllInquiries(env, corsHeaders) {
+async function getAllInquiries(request, env, corsHeaders) {
   try {
-    // TODO: Add authentication check
+    if (!await requireAuth(request, env)) return unauthorized(corsHeaders);
 
     const { results } = await env.DB.prepare(
       `SELECT i.*, p.name as product_name
@@ -124,9 +124,9 @@ async function getAllInquiries(env, corsHeaders) {
 }
 
 // Get single inquiry (Admin only)
-async function getInquiry(env, inquiryId, corsHeaders) {
+async function getInquiry(request, env, inquiryId, corsHeaders) {
   try {
-    // TODO: Add authentication check
+    if (!await requireAuth(request, env)) return unauthorized(corsHeaders);
 
     const inquiry = await env.DB.prepare(
       `SELECT i.*, p.name as product_name
@@ -156,7 +156,7 @@ async function getInquiry(env, inquiryId, corsHeaders) {
 // Update inquiry status (Admin only)
 async function updateInquiryStatus(request, env, inquiryId, corsHeaders) {
   try {
-    // TODO: Add authentication check
+    if (!await requireAuth(request, env)) return unauthorized(corsHeaders);
     const data = await request.json();
 
     const validStatuses = ['pending', 'processing', 'completed'];
@@ -185,6 +185,13 @@ async function updateInquiryStatus(request, env, inquiryId, corsHeaders) {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
+}
+
+function unauthorized(corsHeaders) {
+  return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    status: 401,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
 }
 
 // Delete inquiry (Super Admin only)

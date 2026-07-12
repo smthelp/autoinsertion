@@ -511,17 +511,17 @@ export async function adminDashboard(env) {
 
             <div class="form-group">
               <label class="form-label" for="settings-site-name">Website Name</label>
-              <input type="text" id="settings-site-name" name="site_name" class="form-input" placeholder="GlobalMart">
+              <input type="text" id="settings-site-name" name="site_name" class="form-input" placeholder="Southern Machinery">
             </div>
 
             <div class="form-group">
               <label class="form-label" for="settings-site-description">Website Description</label>
-              <textarea id="settings-site-description" name="site_description" class="form-textarea" placeholder="Your trusted partner for high-quality industrial products..."></textarea>
+              <textarea id="settings-site-description" name="site_description" class="form-textarea" placeholder="Smart THT auto insertion and PCB assembly automation..."></textarea>
             </div>
 
             <div class="form-group">
               <label class="form-label" for="settings-company-intro">Company Introduction</label>
-              <textarea id="settings-company-intro" name="company_intro" class="form-textarea" placeholder="We are a leading manufacturer and supplier..."></textarea>
+              <textarea id="settings-company-intro" name="company_intro" class="form-textarea" placeholder="Southern Machinery designs THT insertion equipment..."></textarea>
             </div>
 
             <h3 style="font-size: 1.1rem; margin: 2rem 0 1rem; color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">
@@ -530,17 +530,17 @@ export async function adminDashboard(env) {
 
             <div class="form-group">
               <label class="form-label" for="settings-email">Email</label>
-              <input type="email" id="settings-email" name="email" class="form-input" placeholder="info@example.com">
+              <input type="email" id="settings-email" name="email" class="form-input" placeholder="jasonwu@smthelp.com">
             </div>
 
             <div class="form-group">
               <label class="form-label" for="settings-phone">Phone</label>
-              <input type="text" id="settings-phone" name="phone" class="form-input" placeholder="+1 234 567 8900">
+              <input type="text" id="settings-phone" name="phone" class="form-input" placeholder="+86 136 0256 2576">
             </div>
 
             <div class="form-group">
               <label class="form-label" for="settings-address">Address</label>
-              <input type="text" id="settings-address" name="address" class="form-input" placeholder="123 Business St, City, Country">
+              <input type="text" id="settings-address" name="address" class="form-input" placeholder="Bao'an District, Shenzhen, China">
             </div>
 
             <h3 style="font-size: 1.1rem; margin: 2rem 0 1rem; color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">

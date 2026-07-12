@@ -1,3 +1,5 @@
+import { requireSuperAdmin } from './admin';
+
 /**
  * Upload API Handler
  * Handles file uploads to Cloudflare R2
@@ -30,7 +32,12 @@ export async function handleUpload(request, env, corsHeaders) {
 // Upload image to R2
 async function uploadImage(request, env, corsHeaders) {
   try {
-    // TODO: Add authentication check for admin only
+    if (!await requireSuperAdmin(request, env)) {
+      return new Response(JSON.stringify({ error: 'Unauthorized. Super admin access required.' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const formData = await request.formData();
     const file = formData.get('file');
@@ -67,7 +74,8 @@ async function uploadImage(request, env, corsHeaders) {
     // Generate unique filename
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substring(7);
-    const extension = file.name.split('.').pop();
+    const extensions = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' };
+    const extension = extensions[file.type];
     const key = `products/${timestamp}-${randomStr}.${extension}`;
 
     // Upload to R2

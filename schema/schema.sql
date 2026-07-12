@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS admins (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
+  password_salt TEXT NOT NULL,
+  password_iterations INTEGER NOT NULL DEFAULT 100000,
   email TEXT,
   role TEXT DEFAULT 'admin', -- super_admin, admin
   last_login DATETIME,
@@ -51,14 +53,14 @@ CREATE INDEX IF NOT EXISTS idx_inquiries_status ON inquiries(status);
 CREATE INDEX IF NOT EXISTS idx_inquiries_product ON inquiries(product_id);
 
 
-INSERT OR IGNORE INTO admins (username, password_hash, email, role)
+INSERT OR IGNORE INTO admins (username, password_hash, password_salt, password_iterations, email, role)
 VALUES
-('admin123', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 'admin@example.com', 'admin'),
-('staff', '10176e7b7b24d317acfcf8d2064cfd2f24e154f7b5a96603077d5ef813d6a6b6', 'staff@example.com', 'admin');
+('ththelp', 'c3a2481765f87618ac4345963e7685247d282cdfafe0af0a87ead8275a40052c', '6b3d215f832df8a6a6045254d9b2d0ac', 100000, 'jasonwu@smthelp.com', 'super_admin'),
+('thtsales', '06b541d19add9d83a62ac6f7f5ecb5a5d9b7bb5aec68d5565f5961187e7ecfd2', 'bb67d1303804fedfadfbf6f8f02c6259', 100000, 'jasonwu@smthelp.com', 'admin');
 
--- Insert sample products
+-- Insert verified THT product records
 INSERT OR IGNORE INTO products (id, name, description, detailed_description, specifications, image_url, category, is_featured)
 VALUES
-(1, 'Sample Product 1', 'High-quality industrial product', 'This is a detailed description of our flagship product...', 'Material: Steel\nDimensions: 100x50x30cm\nWeight: 25kg', '/images/product1.jpg', 'Industrial', 1),
-(2, 'Sample Product 2', 'Innovative technology solution', 'Advanced technology product with superior performance...', 'Power: 220V\nCapacity: 500L\nCertification: CE, ISO9001', '/images/product2.jpg', 'Technology', 1),
-(3, 'Sample Product 3', 'Premium quality equipment', 'Reliable equipment for professional use...', 'Model: XYZ-3000\nWarranty: 2 years\nOrigin: Made in China', '/images/product3.jpg', 'Equipment', 0);
+(1, 'S3010A Radial Auto Insertion Machine', 'Automatic insertion for radial capacitors, LEDs and transistors.', 'A radial component insertion platform for THT PCB production. Final feeder, tooling and application compatibility are confirmed from component and PCB samples.', 'Rated speed: 12,000 CPH\nApplication: Radial THT components\nConfiguration: Confirmed case by case', 'https://hk03-1251009151.file.myqcloud.com/smthelp.com/shop_imgs/2023-6-29-16879999218660.png', 'Radial Insertion', 1),
+(2, 'S4000 Axial Auto Insertion Machine', 'Automatic insertion for diodes, resistors and axial components.', 'An axial component insertion platform for THT PCB production. Final feeder, tooling and application compatibility are confirmed from component and PCB samples.', 'Rated speed: 13,000 CPH\nApplication: Axial THT components\nConfiguration: Confirmed case by case', 'https://hk03-1251009151.file.myqcloud.com/smthelp.com/shop_imgs/2023-6-29-16879999218660.png', 'Axial Insertion', 1),
+(3, 'S7900 Odd Form Insertion Machine', 'Configurable insertion for transformers, connectors and large electrolytic capacitors.', 'An odd-form insertion platform configured around component geometry, feeding method, insertion force and PCB support requirements.', 'Application: Odd-form THT components\nSpeed: Application dependent\nConfiguration: Engineering confirmation required', 'https://hk03-1251009151.file.myqcloud.com/smthelp.com/desc/2019/05/%E5%9B%BE%E7%89%872-1.png', 'Odd Form Insertion', 1);

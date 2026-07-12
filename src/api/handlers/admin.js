@@ -3,9 +3,7 @@
  * Handles admin authentication and admin-specific operations
  */
 
-import { hashPassword, verifyPassword, generateToken, verifyToken } from '../../utils/auth';
-
-const JWT_SECRET = 'your-secret-key-change-this-in-production'; // TODO: Move to environment variable
+import { verifyPassword, generateToken, verifyToken } from '../../utils/auth';
 
 export async function handleAdmin(request, env, corsHeaders) {
   const url = new URL(request.url);
@@ -67,7 +65,7 @@ async function adminLogin(request, env, corsHeaders) {
     }
 
     // Verify password
-    const isValid = await verifyPassword(password, admin.password_hash);
+    const isValid = await verifyPassword(password, admin.password_hash, admin.password_salt, admin.password_iterations);
     if (!isValid) {
       return new Response(JSON.stringify({
         error: 'Invalid username or password'
@@ -88,7 +86,7 @@ async function adminLogin(request, env, corsHeaders) {
       username: admin.username,
       role: admin.role,
       exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24 hours
-    }, JWT_SECRET);
+    }, env.JWT_SECRET);
 
     return new Response(JSON.stringify({
       success: true,
@@ -127,7 +125,7 @@ async function verifyAdminToken(request, env, corsHeaders) {
       });
     }
 
-    const payload = await verifyToken(token, JWT_SECRET);
+    const payload = await verifyToken(token, env.JWT_SECRET);
 
     if (!payload) {
       return new Response(JSON.stringify({
@@ -180,7 +178,13 @@ async function adminLogout(request, env, corsHeaders) {
 // Get dashboard statistics
 async function getDashboardStats(request, env, corsHeaders) {
   try {
-    // TODO: Add authentication check
+    const admin = await requireAuth(request, env);
+    if (!admin) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Get total products
     const { total_products } = await env.DB.prepare(
@@ -234,7 +238,7 @@ export async function requireAuth(request, env) {
   }
 
   const token = authHeader.substring(7);
-  const payload = await verifyToken(token, JWT_SECRET);
+  const payload = await verifyToken(token, env.JWT_SECRET);
 
   if (!payload) {
     return null;

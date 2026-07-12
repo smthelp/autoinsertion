@@ -42,7 +42,7 @@ A professional B2B product exhibition website built on Cloudflare Workers with D
 - **Database**: Cloudflare D1 (SQLite)
 - **Storage**: Cloudflare R2 (Images), Cloudflare KV (Settings)
 - **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
-- **Authentication**: JWT tokens with SHA-256 password hashing
+- **Authentication**: HS256 JWT tokens with salted PBKDF2-SHA256 password hashing
 - **Authorization**: Role-based access control (RBAC)
 
 ## Deployment Steps
@@ -72,7 +72,7 @@ npm install
 
 ```bash
 # Create database
-wrangler d1 create b2b_database
+wrangler d1 create tht_database
 
 # Note the database_id from output and update wrangler.toml
 ```
@@ -84,15 +84,15 @@ Edit `wrangler.toml` and replace `database_id` with the actual ID from step 3:
 ```toml
 [[d1_databases]]
 binding = "DB"
-database_name = "b2b_database"
-database_id = "your-database-id"  # Replace this
+database_name = "tht_database"
+database_id = "28bed2b5-b7b7-4511-82c4-1694f883ce2a"
 ```
 
 ### 5. Create R2 Storage Bucket (for image uploads)
 
 ```bash
 # Create R2 bucket
-wrangler r2 bucket create b2b-product-images
+wrangler r2 bucket create tht-product-images
 ```
 
 Confirm `wrangler.toml` has R2 configuration:
@@ -100,17 +100,17 @@ Confirm `wrangler.toml` has R2 configuration:
 ```toml
 [[r2_buckets]]
 binding = "IMAGES"
-bucket_name = "b2b-product-images"
+bucket_name = "tht-product-images"
 ```
 
 ### 6. Create KV Namespace (for website settings)
 
 ```bash
 # Create KV namespace for production
-wrangler kv namespace create "STATIC_ASSETS"
+wrangler kv namespace create "tht-kv-autoinsertion"
 
 # Create KV namespace for development (optional)
-wrangler kv namespace create "STATIC_ASSETS" --preview
+wrangler kv namespace create "tht-preview-kv-autoinsertion"
 ```
 
 Update `wrangler.toml` with the KV namespace IDs:
@@ -118,23 +118,21 @@ Update `wrangler.toml` with the KV namespace IDs:
 ```toml
 [[kv_namespaces]]
 binding = "STATIC_ASSETS"
-id = "your-kv-namespace-id"  # Replace this
-preview_id = "your-preview-kv-namespace-id"  # Optional, for local dev
+id = "3483bad1eb214b5094c45f0b69c50ff0"
+preview_id = "d642e7cb60924c16b5faa618b8352227"
 ```
 
 ### 7. Initialize Database
 
 ```bash
 # Execute database schema
-wrangler d1 execute b2b_database --file=./schema/schema.sql
+wrangler d1 execute tht_database --remote --file=./schema/schema.sql
 ```
 
 This will create:
 - Database tables (products, inquiries, admins)
-- Two default admin accounts:
-  - **Super Admin**: username `admin123`, password `admin123`
-  - **Regular Admin**: username `staff`, password `staff123`
-- Sample products for testing
+- Two pre-provisioned admin accounts with salted PBKDF2 hashes. Passwords are supplied securely and are never documented in the repository.
+- Verified THT product seed records
 
 ### 8. Local Development
 
@@ -152,69 +150,22 @@ Visit http://localhost:8787 to test the website.
 npm run deploy
 ```
 
+Production is deployed in Cloudflare Pages Advanced Mode at:
+
+`https://tht-autoinsertion-site.pages.dev`
+
+The Pages project reuses the `tht_database` D1 database, `tht-product-images` R2 bucket, and `tht-kv-autoinsertion` KV namespace declared in `wrangler.pages.toml`. The build script bundles the Worker into `.pages-dist/_worker.js`; `.pages-dist/` is generated and must not be committed.
+
 
 
 ## Admin Account Management
 
-### Default Credentials
+### Security Configuration
 
-After initial setup, you'll have two admin accounts:
+Admin passwords are stored as per-user PBKDF2-SHA256 hashes with 100,000 iterations, the maximum supported by the Cloudflare Pages WebCrypto runtime. Configure the JWT signing key as a Cloudflare secret; never place it in `wrangler.toml`:
 
-| Username | Password | Role | Permissions |
-|----------|----------|------|-------------|
-| admin123 | admin123 | Super Admin | Full CRUD access |
-| staff    | staff123 | Regular Admin | Read-only access |
-
-### Security Best Practices
-
-🔐 **IMPORTANT**: Change default passwords immediately after first deployment!
-
-#### 1. Generate New Password Hash
-
-Use browser console to generate a new password hash:
-
-```javascript
-async function hashPassword(password) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-// Generate hash for your new password
-hashPassword('your-new-secure-password').then(hash => console.log(hash));
-```
-
-#### 2. Update Password in Database
-
-```sql
--- Update admin password
-UPDATE admins
-SET password_hash = 'your-generated-hash'
-WHERE username = 'admin';
-```
-
-Execute via Wrangler CLI:
-```bash
-wrangler d1 execute b2b_database --command="UPDATE admins SET password_hash = 'your-hash' WHERE username = 'admin';"
-```
-
-Or via Cloudflare Dashboard Console.
-
-#### 3. Configure JWT Secret
-
-**Option A**: Using wrangler.toml (not recommended for production)
-```toml
-[vars]
-JWT_SECRET = "your-very-secure-secret-key-change-this"
-ENVIRONMENT = "production"
-```
-
-**Option B**: Using Cloudflare Dashboard Secrets (recommended)
 ```bash
 wrangler secret put JWT_SECRET
-# Enter your secret when prompted
 ```
 
 ## Usage Guide

@@ -3,7 +3,7 @@
  * Handles all product-related API requests
  */
 
-import { requireSuperAdmin } from './admin';
+import { requireAuth, requireSuperAdmin } from './admin';
 
 export async function handleProducts(request, env, corsHeaders) {
   const url = new URL(request.url);
@@ -53,8 +53,7 @@ export async function handleProducts(request, env, corsHeaders) {
 async function getAllProducts(env, corsHeaders, request) {
   try {
     // Check if this is an authenticated admin request
-    const authHeader = request?.headers?.get('Authorization');
-    const isAdmin = authHeader && authHeader.startsWith('Bearer ');
+    const isAdmin = Boolean(await requireAuth(request, env));
 
     // Admin can see all products, public can only see active ones
     let query;
@@ -99,8 +98,7 @@ async function getFeaturedProducts(env, corsHeaders) {
 async function getProduct(env, productId, corsHeaders, request) {
   try {
     // Check if this is an authenticated admin request
-    const authHeader = request?.headers?.get('Authorization');
-    const isAdmin = authHeader && authHeader.startsWith('Bearer ');
+    const isAdmin = Boolean(await requireAuth(request, env));
 
     // Admin can see all products, public can only see active ones
     let query;

@@ -50,7 +50,7 @@ export async function adminLoginPage(env) {
 
           <div style="margin-top: 1.5rem; text-align: center;">
             <p style="color: var(--text-light); font-size: 0.9rem;">
-              Default credentials: admin123 / admin123
+              Authorized Southern Machinery personnel only
             </p>
             <a href="/" style="color: var(--primary-color); text-decoration: none; font-size: 0.9rem;">
               ← Back to Website

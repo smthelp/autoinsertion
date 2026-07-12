@@ -9,6 +9,10 @@ import { aboutPage } from './about';
 import { contactPage } from './contact';
 import { adminLoginPage } from './admin-login';
 import { adminDashboard } from './admin-dashboard';
+import { solutionsPage } from './solutions';
+import { industriesPage } from './industries';
+import { supportPage } from './support';
+import { adStudioPage } from './ad-studio';
 
 export async function handlePageRequest(request, env) {
   const url = new URL(request.url);
@@ -39,6 +43,22 @@ export async function handlePageRequest(request, env) {
 
   if (path === '/contact') {
     return contactPage(env);
+  }
+
+  if (path === '/solutions') {
+    return solutionsPage(env);
+  }
+
+  if (path === '/industries') {
+    return industriesPage(env);
+  }
+
+  if (path === '/support') {
+    return supportPage(env);
+  }
+
+  if (path === '/ad-studio') {
+    return adStudioPage(env);
   }
 
   if (path === '/admin' || path === '/admin/login') {

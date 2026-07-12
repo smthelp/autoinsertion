@@ -1,14 +1,17 @@
-name = "tht-autoinsertion-site"
-pages_build_output_dir = ".pages-dist"
+name = "tht-autoinsertion"
+main = "src/index.js"
 compatibility_date = "2025-12-02"
-
-[vars]
-ENVIRONMENT = "production"
+account_id = "bd78615ae934261c50318fa876966406"
+workers_dev = true
+preview_urls = true
 
 [[d1_databases]]
 binding = "DB"
 database_name = "tht_database"
 database_id = "28bed2b5-b7b7-4511-82c4-1694f883ce2a"
+
+[vars]
+ENVIRONMENT = "production"
 
 [[r2_buckets]]
 binding = "IMAGES"
@@ -17,3 +20,4 @@ bucket_name = "tht-product-images"
 [[kv_namespaces]]
 binding = "STATIC_ASSETS"
 id = "3483bad1eb214b5094c45f0b69c50ff0"
+preview_id = "d642e7cb60924c16b5faa618b8352227"
